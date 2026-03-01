@@ -14,28 +14,17 @@
       <a href="players.html">Players</a>
       <a href="leaderboard.html">Leaderboard</a>
     </nav>
+    <input type="text" id="search" placeholder="Search teams, players, matches..." oninput="searchItems()">
   </header>
 
   <main>
-    <section id="intro">
-      <h2>Welcome to Soccer Hub!</h2>
-      <p>See professional games, vote for your favorite teams & players, and check the leaderboard.</p>
-    </section>
-
     <section id="matches">
-      <h2>Upcoming Matches</h2>
-      <ul>
-        <li>FC Barcelona vs Real Madrid - 2026-03-05</li>
-        <li>Liverpool vs Manchester City - 2026-03-06</li>
-        <li>PSG vs Bayern Munich - 2026-03-07</li>
+      <h2>Today’s Matches</h2>
+      <ul id="matches-list">
+        <!-- Matches will load here -->
       </ul>
-      <p>More matches coming soon...</p>
     </section>
   </main>
-
-  <footer>
-    <p>&copy; 2026 Soccer Hub</p>
-  </footer>
 
   <script src="script.js"></script>
 </body>
