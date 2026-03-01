@@ -23,7 +23,7 @@ header nav a:hover {
   text-decoration: underline;
 }
 
-input#search {
+input {
   margin-top: 10px;
   padding: 8px;
   width: 80%;
@@ -48,10 +48,11 @@ main {
   align-items: center;
 }
 
-.team img {
+.team img, .player img {
   margin-right: 15px;
   width: 60px;
   height: 60px;
+  border-radius: 50%;
 }
 
 button {
