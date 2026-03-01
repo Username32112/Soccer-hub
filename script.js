@@ -1,5 +1,4 @@
-// ==================== CONFIG
-const API_KEY = "97f69b9368382e085449660766ff3872"; // dashboard.api-football.com key
+const API_KEY = "97f69b9368382e085449660766ff3872";
 const API_BASE = "https://v3.football.api-sports.io";
 
 let allTeams = [];
@@ -8,7 +7,7 @@ let allMatches = [];
 let teamVotes = {};
 let playerVotes = {};
 
-// ==================== FETCH MATCHES (TODAY)
+// ==================== Fetch Matches
 async function fetchMatches() {
   const today = new Date().toISOString().split("T")[0];
   const res = await fetch(`${API_BASE}/fixtures?date=${today}`, {
@@ -35,19 +34,19 @@ async function fetchMatches() {
   });
 }
 
-// ==================== FETCH LEAGUES
+// ==================== Fetch Leagues → Teams → Players
 async function fetchLeagues() {
   const res = await fetch(`${API_BASE}/leagues`, {
     headers: { "x-apisports-key": API_KEY }
   });
   const data = await res.json();
-  const leagues = data.response.slice(0, 3); // first 3 leagues for simplicity
+  const leagues = data.response.slice(0, 3); // adjust number for more leagues
   for (let league of leagues) {
     await fetchTeams(league.league.id, 2025);
   }
 }
 
-// ==================== FETCH TEAMS
+// ==================== Fetch Teams
 async function fetchTeams(leagueId, season) {
   const res = await fetch(`${API_BASE}/teams?league=${leagueId}&season=${season}`, {
     headers: { "x-apisports-key": API_KEY }
@@ -57,11 +56,10 @@ async function fetchTeams(leagueId, season) {
   allTeams.push(...teams);
   teams.forEach(t => teamVotes[t.name] = 0);
   displayTeams(allTeams);
-
   for (let team of teams) await fetchPlayers(team.id, season);
 }
 
-// ==================== FETCH PLAYERS
+// ==================== Fetch Players
 async function fetchPlayers(teamId, season) {
   const res = await fetch(`${API_BASE}/players?team=${teamId}&season=${season}`, {
     headers: { "x-apisports-key": API_KEY }
@@ -75,7 +73,7 @@ async function fetchPlayers(teamId, season) {
   updatePlayerSuggestions();
 }
 
-// ==================== DISPLAY TEAMS
+// ==================== Display Teams
 function displayTeams(teams) {
   const container = document.querySelector(".team-list");
   if (!container) return;
@@ -99,7 +97,7 @@ function displayTeams(teams) {
   });
 }
 
-// ==================== DISPLAY PLAYERS
+// ==================== Display Players
 function displayPlayers(players) {
   const container = document.querySelector(".player-list");
   if (!container) return;
@@ -122,7 +120,7 @@ function displayPlayers(players) {
   });
 }
 
-// ==================== VOTING
+// ==================== Voting
 function voteTeam(name) {
   teamVotes[name]++;
   document.getElementById(`votes-${name}`).innerText = `${teamVotes[name]} votes`;
@@ -134,7 +132,7 @@ function votePlayer(name) {
   updateLeaderboard();
 }
 
-// ==================== LEADERBOARD
+// ==================== Leaderboard
 function updateLeaderboard() {
   const teamList = document.getElementById("team-leaderboard");
   if (teamList) {
@@ -148,7 +146,6 @@ function updateLeaderboard() {
         teamList.appendChild(li);
       });
   }
-
   const playerList = document.getElementById("player-leaderboard");
   if (playerList) {
     playerList.innerHTML = "";
@@ -163,7 +160,7 @@ function updateLeaderboard() {
   }
 }
 
-// ==================== SEARCH
+// ==================== Search
 function searchPlayers() {
   const query = document.getElementById("player-search")?.value.toLowerCase() || "";
   document.querySelectorAll(".player").forEach(player => {
@@ -177,7 +174,7 @@ function searchTeams() {
   });
 }
 
-// ==================== AUTOFILL
+// ==================== Auto-complete
 function updatePlayerSuggestions() {
   const datalist = document.getElementById("player-suggestions");
   if (!datalist) return;
