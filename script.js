@@ -1,36 +1,62 @@
-// ============================
-// CONFIG
-// ============================
-const API_KEY = "97f69b9368382e085449660766ff3872"; // Replace with your API-Football key
+const API_KEY = "97f69b9368382e085449660766ff3872";
 const API_HOST = "api-football-v1.p.rapidapi.com";
 
 let teamVotes = {};
-let playerVotes = [];
+let playerVotes = {};
 let allTeams = [];
 let allPlayers = [];
 let allMatches = [];
 
-// ============================
-// FETCH TEAMS
-// ============================
-async function fetchTeams() {
-  // Example: Premier League (league=39, season=2025)
-  const url = `https://${API_HOST}/v3/teams?league=39&season=2025`;
+// ===========================
+// FETCH LEAGUES → TEAMS → PLAYERS
+// ===========================
+async function fetchLeagues() {
+  const url = `https://${API_HOST}/v3/leagues`;
   const res = await fetch(url, {
     method: "GET",
-    headers: {
-      "X-RapidAPI-Key": API_KEY,
-      "X-RapidAPI-Host": API_HOST
-    }
+    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST }
   });
   const data = await res.json();
-  allTeams = data.response.map(t => t.team);
+  const leagues = data.response.slice(0, 3); // limit to 3 leagues for free API
+
+  for (let league of leagues) await fetchTeams(league.league.id, 2025);
+}
+
+async function fetchTeams(leagueId, season) {
+  const url = `https://${API_HOST}/v3/teams?league=${leagueId}&season=${season}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST }
+  });
+  const data = await res.json();
+  const teams = data.response.map(t => t.team);
+  allTeams.push(...teams);
+  teams.forEach(t => teamVotes[t.name] = 0);
   displayTeams(allTeams);
-  allTeams.forEach(t => teamVotes[t.name] = 0);
+
+  for (let team of teams) await fetchPlayers(team.id, season);
+}
+
+// ===========================
+// FETCH PLAYERS
+// ===========================
+async function fetchPlayers(teamId, season) {
+  const url = `https://${API_HOST}/v3/players?team=${teamId}&season=${season}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST }
+  });
+  const data = await res.json();
+  const players = data.response.map(p => p.player);
+  allPlayers.push(...players);
+  players.forEach(p => playerVotes[p.name] = 0);
+  displayPlayers(allPlayers);
   updateLeaderboard();
 }
 
-// Display Teams
+// ===========================
+// DISPLAY TEAMS
+// ===========================
 function displayTeams(teams) {
   const container = document.querySelector(".team-list");
   if (!container) return;
@@ -41,7 +67,13 @@ function displayTeams(teams) {
     div.dataset.name = team.name;
     div.innerHTML = `
       <img src="${team.logo}" alt="${team.name}">
-      <h3>${team.name}</h3>
+      <div>
+        <h3>${team.name}</h3>
+        <p>Country: ${team.country ?? "N/A"}</p>
+        <p>Founded: ${team.founded ?? "N/A"}</p>
+        <p>Venue: ${team.venue ?? "N/A"}</p>
+        <p>Wins: ${Math.floor(Math.random()*30)}</p> <!-- placeholder wins -->
+      </div>
       <button onclick="voteTeam('${team.name}')">Vote</button>
       <span id="votes-${team.name}">0 votes</span>
     `;
@@ -49,28 +81,9 @@ function displayTeams(teams) {
   });
 }
 
-// ============================
-// FETCH PLAYERS (first team for example)
-// ============================
-async function fetchPlayers() {
-  if (!allTeams.length) return;
-  const teamId = allTeams[0].id;
-  const url = `https://${API_HOST}/v3/players?team=${teamId}&season=2025`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      "X-RapidAPI-Key": API_KEY,
-      "X-RapidAPI-Host": API_HOST
-    }
-  });
-  const data = await res.json();
-  allPlayers = data.response.map(p => p.player);
-  displayPlayers(allPlayers);
-  allPlayers.forEach(p => playerVotes[p.name] = 0);
-  updateLeaderboard();
-}
-
-// Display Players
+// ===========================
+// DISPLAY PLAYERS
+// ===========================
 function displayPlayers(players) {
   const container = document.querySelector(".player-list");
   if (!container) return;
@@ -81,6 +94,9 @@ function displayPlayers(players) {
     div.dataset.name = player.name;
     div.innerHTML = `
       <h3>${player.name}</h3>
+      <p>Age: ${player.age ?? "N/A"} | Nationality: ${player.nationality ?? "N/A"}</p>
+      <p>Position: ${player.position ?? "N/A"}</p>
+      <p>Goals: ${Math.floor(Math.random()*30)} | Assists: ${Math.floor(Math.random()*20)}</p>
       <button onclick="votePlayer('${player.name}')">Vote</button>
       <span id="votes-${player.name}">0 votes</span>
     `;
@@ -88,40 +104,9 @@ function displayPlayers(players) {
   });
 }
 
-// ============================
-// FETCH MATCHES
-// ============================
-async function fetchMatches() {
-  const date = new Date().toISOString().split("T")[0];
-  const url = `https://${API_HOST}/v3/fixtures?date=${date}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      "X-RapidAPI-Key": API_KEY,
-      "X-RapidAPI-Host": API_HOST
-    }
-  });
-  const data = await res.json();
-  allMatches = data.response;
-  displayMatches(allMatches);
-}
-
-// Display Matches
-function displayMatches(matches) {
-  const container = document.getElementById("matches-list");
-  if (!container) return;
-  container.innerHTML = "";
-  matches.forEach(fix => {
-    const li = document.createElement("li");
-    li.className = "match-item";
-    li.innerText = `${fix.teams.home.name} vs ${fix.teams.away.name} | ${fix.score.fulltime.home ?? "-"}-${fix.score.fulltime.away ?? "-"} | ${fix.league.name}`;
-    container.appendChild(li);
-  });
-}
-
-// ============================
+// ===========================
 // VOTING
-// ============================
+// ===========================
 function voteTeam(name) {
   teamVotes[name]++;
   document.getElementById(`votes-${name}`).innerText = `${teamVotes[name]} votes`;
@@ -134,16 +119,16 @@ function votePlayer(name) {
   updateLeaderboard();
 }
 
-// ============================
+// ===========================
 // LEADERBOARD
-// ============================
+// ===========================
 function updateLeaderboard() {
-  // Teams
   const teamList = document.getElementById("team-leaderboard");
   if (teamList) {
     teamList.innerHTML = "";
     Object.entries(teamVotes)
       .sort((a,b) => b[1]-a[1])
+      .slice(0,10)
       .forEach(([team, votes]) => {
         const li = document.createElement("li");
         li.innerText = `${team}: ${votes} votes`;
@@ -151,12 +136,12 @@ function updateLeaderboard() {
       });
   }
 
-  // Players
   const playerList = document.getElementById("player-leaderboard");
   if (playerList) {
     playerList.innerHTML = "";
     Object.entries(playerVotes)
       .sort((a,b) => b[1]-a[1])
+      .slice(0,10)
       .forEach(([player, votes]) => {
         const li = document.createElement("li");
         li.innerText = `${player}: ${votes} votes`;
@@ -165,33 +150,52 @@ function updateLeaderboard() {
   }
 }
 
-// ============================
-// SEARCH FUNCTION
-// ============================
+// ===========================
+// SEARCH
+// ===========================
 function searchItems() {
   const query = document.getElementById("search")?.value.toLowerCase() || "";
 
-  // Teams
   document.querySelectorAll(".team").forEach(team => {
     team.style.display = team.dataset.name.toLowerCase().includes(query) ? "flex" : "none";
   });
 
-  // Players
   document.querySelectorAll(".player").forEach(player => {
     player.style.display = player.dataset.name.toLowerCase().includes(query) ? "flex" : "none";
   });
 
-  // Matches
   document.querySelectorAll(".match-item").forEach(match => {
     match.style.display = match.innerText.toLowerCase().includes(query) ? "block" : "none";
   });
 }
 
-// ============================
+// ===========================
+// MATCHES
+// ===========================
+async function fetchMatches() {
+  const date = new Date().toISOString().split("T")[0];
+  const url = `https://${API_HOST}/v3/fixtures?date=${date}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST }
+  });
+  const data = await res.json();
+  allMatches = data.response;
+  const container = document.getElementById("matches-list");
+  if (!container) return;
+  container.innerHTML = "";
+  allMatches.forEach(fix => {
+    const li = document.createElement("li");
+    li.className = "match-item";
+    li.innerText = `${fix.teams.home.name} vs ${fix.teams.away.name} | ${fix.score.fulltime.home ?? "-"}-${fix.score.fulltime.away ?? "-"} | ${fix.league.name}`;
+    container.appendChild(li);
+  });
+}
+
+// ===========================
 // INIT
-// ============================
+// ===========================
 window.onload = () => {
-  fetchTeams();
-  fetchPlayers();
+  fetchLeagues();
   fetchMatches();
 };
