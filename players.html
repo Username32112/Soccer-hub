@@ -7,47 +7,21 @@
 </head>
 <body>
   <header>
-    <h1>Soccer Hub - Players</h1>
+    <h1>Players</h1>
     <nav>
       <a href="index.html">Home</a>
       <a href="teams.html">Teams</a>
       <a href="players.html">Players</a>
       <a href="leaderboard.html">Leaderboard</a>
     </nav>
+    <input type="text" id="search" placeholder="Search players..." oninput="searchItems()">
   </header>
 
   <main>
-    <h2>Vote for Your Favorite Player</h2>
-    <div class="player-list">
-      <div class="player" data-name="Lionel Messi">
-        <h3>Lionel Messi</h3>
-        <button onclick="votePlayer('Lionel Messi')">Vote</button>
-        <span id="votes-Lionel Messi">0 votes</span>
-      </div>
-
-      <div class="player" data-name="Cristiano Ronaldo">
-        <h3>Cristiano Ronaldo</h3>
-        <button onclick="votePlayer('Cristiano Ronaldo')">Vote</button>
-        <span id="votes-Cristiano Ronaldo">0 votes</span>
-      </div>
-
-      <div class="player" data-name="Neymar Jr.">
-        <h3>Neymar Jr.</h3>
-        <button onclick="votePlayer('Neymar Jr.')">Vote</button>
-        <span id="votes-Neymar Jr.">0 votes</span>
-      </div>
-
-      <div class="player" data-name="Kylian Mbappé">
-        <h3>Kylian Mbappé</h3>
-        <button onclick="votePlayer('Kylian Mbappé')">Vote</button>
-        <span id="votes-Kylian Mbappé">0 votes</span>
-      </div>
-    </div>
+    <section class="player-list">
+      <!-- Players will load here -->
+    </section>
   </main>
-
-  <footer>
-    <p>&copy; 2026 Soccer Hub</p>
-  </footer>
 
   <script src="script.js"></script>
 </body>
