@@ -1,5 +1,6 @@
-const API_KEY = "97f69b9368382e085449660766ff3872";
-const API_HOST = "api-football-v1.p.rapidapi.com";
+// ==================== CONFIG
+const API_KEY = "97f69b9368382e085449660766ff3872"; // dashboard.api-football.com key
+const API_BASE = "https://v3.football.api-sports.io";
 
 let allTeams = [];
 let allPlayers = [];
@@ -7,14 +8,11 @@ let allMatches = [];
 let teamVotes = {};
 let playerVotes = {};
 
-// ===========================
-// FETCH MATCHES (live)
+// ==================== FETCH MATCHES (TODAY)
 async function fetchMatches() {
-  const date = new Date().toISOString().split("T")[0];
-  const url = `https://${API_HOST}/v3/fixtures?date=${date}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST }
+  const today = new Date().toISOString().split("T")[0];
+  const res = await fetch(`${API_BASE}/fixtures?date=${today}`, {
+    headers: { "x-apisports-key": API_KEY }
   });
   const data = await res.json();
   allMatches = data.response;
@@ -26,62 +24,58 @@ async function fetchMatches() {
   allMatches.forEach(fix => {
     const li = document.createElement("li");
     li.className = "match-item";
-    li.innerText = `${fix.teams.home.name} vs ${fix.teams.away.name} | ${fix.score.fulltime.home ?? "-"}-${fix.score.fulltime.away ?? "-"} | ${fix.league.name}`;
+    li.innerHTML = `
+      <img src="${fix.teams.home.logo}" width="30"> <strong>${fix.teams.home.name}</strong>
+      vs
+      <img src="${fix.teams.away.logo}" width="30"> <strong>${fix.teams.away.name}</strong>
+      | ${fix.score.fulltime.home ?? "-"}-${fix.score.fulltime.away ?? "-"}
+      | ${fix.league.name}
+    `;
     container.appendChild(li);
   });
 }
 
-// ===========================
-// FETCH LEAGUES → TEAMS → PLAYERS
+// ==================== FETCH LEAGUES
 async function fetchLeagues() {
-  const url = `https://${API_HOST}/v3/leagues`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST }
+  const res = await fetch(`${API_BASE}/leagues`, {
+    headers: { "x-apisports-key": API_KEY }
   });
-  const leagues = (await res.json()).response.slice(0,3); // first 3 leagues for free plan
-
+  const data = await res.json();
+  const leagues = data.response.slice(0, 3); // first 3 leagues for simplicity
   for (let league of leagues) {
     await fetchTeams(league.league.id, 2025);
   }
 }
 
-// ===========================
-// FETCH TEAMS
+// ==================== FETCH TEAMS
 async function fetchTeams(leagueId, season) {
-  const url = `https://${API_HOST}/v3/teams?league=${leagueId}&season=${season}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST }
+  const res = await fetch(`${API_BASE}/teams?league=${leagueId}&season=${season}`, {
+    headers: { "x-apisports-key": API_KEY }
   });
-  const teams = (await res.json()).response.map(t => t.team);
+  const data = await res.json();
+  const teams = data.response.map(t => t.team);
   allTeams.push(...teams);
-
   teams.forEach(t => teamVotes[t.name] = 0);
   displayTeams(allTeams);
 
   for (let team of teams) await fetchPlayers(team.id, season);
 }
 
-// ===========================
-// FETCH PLAYERS
+// ==================== FETCH PLAYERS
 async function fetchPlayers(teamId, season) {
-  const url = `https://${API_HOST}/v3/players?team=${teamId}&season=${season}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST }
+  const res = await fetch(`${API_BASE}/players?team=${teamId}&season=${season}`, {
+    headers: { "x-apisports-key": API_KEY }
   });
-  const players = (await res.json()).response.map(p => p.player);
+  const data = await res.json();
+  const players = data.response.map(p => p.player);
   allPlayers.push(...players);
   players.forEach(p => playerVotes[p.name] = 0);
-
   displayPlayers(allPlayers);
   updateLeaderboard();
   updatePlayerSuggestions();
 }
 
-// ===========================
-// DISPLAY TEAMS
+// ==================== DISPLAY TEAMS
 function displayTeams(teams) {
   const container = document.querySelector(".team-list");
   if (!container) return;
@@ -105,8 +99,7 @@ function displayTeams(teams) {
   });
 }
 
-// ===========================
-// DISPLAY PLAYERS
+// ==================== DISPLAY PLAYERS
 function displayPlayers(players) {
   const container = document.querySelector(".player-list");
   if (!container) return;
@@ -116,7 +109,7 @@ function displayPlayers(players) {
     div.className = "player";
     div.dataset.name = player.name;
     div.innerHTML = `
-      <img src="${player.photo ?? ''}" alt="${player.name}" style="width:60px;height:60px;margin-right:10px;border-radius:50%;">
+      <img src="${player.photo ?? ''}" alt="${player.name}">
       <div>
         <h3>${player.name}</h3>
         <p>Age: ${player.age ?? "N/A"} | Nationality: ${player.nationality ?? "N/A"}</p>
@@ -129,22 +122,19 @@ function displayPlayers(players) {
   });
 }
 
-// ===========================
-// VOTING
+// ==================== VOTING
 function voteTeam(name) {
   teamVotes[name]++;
   document.getElementById(`votes-${name}`).innerText = `${teamVotes[name]} votes`;
   updateLeaderboard();
 }
-
 function votePlayer(name) {
   playerVotes[name]++;
-  document.getElementById(`votes-${name}`).innerText = `${playerVotes[name]} votes`;
+  document.getElementById(`votes-${player.name}`).innerText = `${playerVotes[player.name]} votes`;
   updateLeaderboard();
 }
 
-// ===========================
-// LEADERBOARD
+// ==================== LEADERBOARD
 function updateLeaderboard() {
   const teamList = document.getElementById("team-leaderboard");
   if (teamList) {
@@ -173,17 +163,21 @@ function updateLeaderboard() {
   }
 }
 
-// ===========================
-// SEARCH (players page only)
+// ==================== SEARCH
 function searchPlayers() {
-  const query = document.getElementById("search")?.value.toLowerCase() || "";
+  const query = document.getElementById("player-search")?.value.toLowerCase() || "";
   document.querySelectorAll(".player").forEach(player => {
     player.style.display = player.dataset.name.toLowerCase().includes(query) ? "flex" : "none";
   });
 }
+function searchTeams() {
+  const query = document.getElementById("team-search")?.value.toLowerCase() || "";
+  document.querySelectorAll(".team").forEach(team => {
+    team.style.display = team.dataset.name.toLowerCase().includes(query) ? "flex" : "none";
+  });
+}
 
-// ===========================
-// AUTOFILL SUGGESTIONS
+// ==================== AUTOFILL
 function updatePlayerSuggestions() {
   const datalist = document.getElementById("player-suggestions");
   if (!datalist) return;
@@ -195,8 +189,7 @@ function updatePlayerSuggestions() {
   });
 }
 
-// ===========================
-// INIT
+// ==================== INIT
 window.onload = () => {
   fetchLeagues();
   fetchMatches();
