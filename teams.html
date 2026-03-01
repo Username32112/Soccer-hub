@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Teams - Soccer Hub</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Soccer Hub - Teams</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="teams.html">Teams</a>
+      <a href="players.html">Players</a>
+      <a href="leaderboard.html">Leaderboard</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Vote for Your Favorite Team</h2>
+    <div class="team-list">
+      <div class="team" data-name="FC Barcelona">
+        <h3>FC Barcelona</h3>
+        <button onclick="voteTeam('FC Barcelona')">Vote</button>
+        <span id="votes-FC Barcelona">0 votes</span>
+      </div>
+
+      <div class="team" data-name="Real Madrid">
+        <h3>Real Madrid</h3>
+        <button onclick="voteTeam('Real Madrid')">Vote</button>
+        <span id="votes-Real Madrid">0 votes</span>
+      </div>
+
+      <div class="team" data-name="Manchester City">
+        <h3>Manchester City</h3>
+        <button onclick="voteTeam('Manchester City')">Vote</button>
+        <span id="votes-Manchester City">0 votes</span>
+      </div>
+
+      <div class="team" data-name="Liverpool">
+        <h3>Liverpool</h3>
+        <button onclick="voteTeam('Liverpool')">Vote</button>
+        <span id="votes-Liverpool">0 votes</span>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Soccer Hub</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
